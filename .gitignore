@@ -1,0 +1,20 @@
+# Secrets — never commit real keys
+.env
+**/.env
+
+# Tailscale sidecar state (mounts)
+**/state/
+**/ts-*-state/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

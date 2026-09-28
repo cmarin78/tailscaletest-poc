@@ -1,0 +1,40 @@
+// ACL policy for the tailscaletest POC.
+// Paste the contents of this file (excluding the leading // comments) into the
+// admin console → Access Controls. Replaces the default allow-all with
+// default-deny: anything not explicitly listed in acls/ssh is rejected.
+//
+// Generated ts auth keys must match these tags exactly.
+
+{
+  // tagOwners: who can assign each tag. autogroup:admin keeps the POC minimal;
+  // production would point at a real group (e.g. group:platform-eng@example.com).
+  "tagOwners": {
+    "tag:admin-portal": ["autogroup:admin"],
+    "tag:internal-db":  ["autogroup:admin"],
+    "tag:eng-admin":    ["autogroup:admin"],
+    "tag:untrusted":    ["autogroup:admin"]
+  },
+
+  // acls: the only network-level allow rule. Port is scoped — eng-admin cannot
+  // reach any other port on admin-portal, and cannot reach internal-db at all
+  // through this file (the only door left open is SSH, below).
+  "acls": [
+    {
+      "action": "accept",
+      "src":    ["tag:eng-admin"],
+      "dst":    ["tag:admin-portal:8080"]
+    }
+  ],
+
+  // ssh: identity-based debugging access, no bastion host.
+  // tag:untrusted is absent everywhere → it gets nothing, including no DNS
+  // resolution of peers (MagicDNS hides nodes with no route to them).
+  "ssh": [
+    {
+      "action": "accept",
+      "src":    ["tag:eng-admin"],
+      "dst":    ["tag:admin-portal", "tag:internal-db"],
+      "users":  ["autogroup:nonroot", "root"]
+    }
+  ]
+}
