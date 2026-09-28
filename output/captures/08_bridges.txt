@@ -1,0 +1,24 @@
+==========================================================
+ Section 8 — Each sidecar attaches to exactly one bridge
+ captured: 2026-09-28T17:54:39Z
+==========================================================
+
+$ $ for c in admin-portal internal-db eng-admin untrusted; do
+      echo "=== $c ==="
+      docker inspect tailscaletest-poc-ts-$c-1 --format '{{json .NetworkSettings.Networks}}' | jq -r 'keys[]'
+  done
+=== admin-portal ===
+tailscaletest-poc_net-admin-portal
+=== internal-db ===
+tailscaletest-poc_net-internal-db
+=== eng-admin ===
+tailscaletest-poc_net-eng-admin
+=== untrusted ===
+tailscaletest-poc_net-untrusted
+
+$ $ docker network ls --filter name=tailscaletest-poc_net-
+NAME                                 DRIVER    SCOPE
+tailscaletest-poc_net-admin-portal   bridge    local
+tailscaletest-poc_net-eng-admin      bridge    local
+tailscaletest-poc_net-internal-db    bridge    local
+tailscaletest-poc_net-untrusted      bridge    local

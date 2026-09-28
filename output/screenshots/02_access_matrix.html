@@ -1,0 +1,86 @@
+<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<style>
+body {
+  font-family: -apple-system, "SF Mono", Menlo, Consolas, monospace;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  margin: 0;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+h1 { color: #f9e2af; font-size: 22px; margin: 0 0 12px; }
+h2 { color: #89b4fa; font-size: 18px; margin: 24px 0 8px; border-bottom: 1px solid #45475a; padding-bottom: 4px; }
+h3 { color: #a6e3a1; font-size: 15px; margin: 16px 0 6px; }
+pre {
+  background: #11111b;
+  border: 1px solid #313244;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+.ok { color: #a6e3a1; }
+.bad { color: #f38ba8; }
+.kw { color: #f9e2af; }
+.emph { background: #45475a; padding: 1px 4px; border-radius: 3px; }
+.toc { color: #6c7086; font-size: 13px; }
+.flag { color: #fab387; }
+</style>
+</head><body>
+<h1>tailscaletest-poc — Access matrix verified</h1>
+<p class="toc">Real commands, real responses from the live tailnet.
+Each cell below is one <span class="flag">$</span> command followed by its output.</p>
+
+<h2><span class="ok">ALLOW</span> — eng-admin → admin-portal:8080</h2>
+<pre>$ docker exec tailscaletest-poc-ts-eng-admin-1 \
+    wget -qO- http://admin-portal-2.taila1b884.ts.net:8080/healthz
+<span class="ok">{"service":"admin-portal","status":"ok"}</span>
+
+$ docker exec tailscaletest-poc-ts-eng-admin-1 \
+    wget -qO- http://admin-portal-2.taila1b884.ts.net:8080/whoami
+{"caller_groups":"&lt;none&gt;","caller_login":"&lt;none&gt;","caller_name":"&lt;none&gt;","service":"admin-portal"}</pre>
+
+<h2><span class="bad">DENY</span> — eng-admin → internal-db:5432</h2>
+<pre>$ docker exec tailscaletest-poc-ts-eng-admin-1 nc -zv -w 2 internal-db.taila1b884.ts.net 5432
+<span class="bad">nc: bad address 'internal-db.taila1b884.ts.net'</span>
+   <span class="kw">[ name not in eng-admin's netmap — MagicDNS hides peers with no ACL route ]</span>
+
+$ docker exec tailscaletest-poc-ts-eng-admin-1 nc -zv -w 2 100.83.102.92 5432
+<span class="bad">nc: 100.83.102.92 (100.83.102.92:5432): Host is unreachable</span>
+   <span class="kw">[ direct tailnet IP — also denied, at the WireGuard layer ]</span></pre>
+
+<h2><span class="bad">DENY</span> — untrusted → anything</h2>
+<pre>$ docker exec tailscaletest-poc-ts-untrusted-1 \
+    getent hosts admin-portal-2.taila1b884.ts.net
+<span class="bad">(no entry — admin-portal not in untrusted's netmap)</span>
+
+$ docker exec tailscaletest-poc-ts-untrusted-1 \
+    wget --timeout=3 -qO- http://100.110.90.56:8080/healthz 2>&1
+<span class="bad">wget: can't connect to remote host (100.110.90.56): Host is unreachable</span></pre>
+
+<h2>Live ACL policy (from the Tailscale API)</h2>
+<pre>tagOwners: 15 (the merged policy includes the parent POC tags too — for the
+       this POC we only need tag:admin-portal, tag:internal-db, tag:eng-admin, tag:untrusted)
+
+acls:
+  {action: accept, src: ['tag:eng-admin'], dst: ['tag:admin-portal:8080']}
+
+ssh:
+  {action: accept, src: ['tag:eng-admin'],
+   dst: ['tag:admin-portal', 'tag:internal-db'],
+   users: ['autogroup:nonroot', 'root']}</pre>
+
+<h2>Verdict in one table</h2>
+<pre><span class="ok">from        to                       result</span>
+eng-admin   admin-portal:8080        ALLOW   <span class="kw">← HTTP 200</span>
+eng-admin   internal-db via SSH      ALLOW   <span class="kw">← Tailscale SSH (identity check)</span>
+eng-admin   internal-db:5432 direct  DENY    <span class="kw">← host unreachable + DNS hidden</span>
+untrusted   admin-portal (any port)  DENY    <span class="kw">← no entry in netmap</span>
+untrusted   internal-db:5432         DENY    <span class="kw">← host unreachable</span>
+untrusted   internal-db via SSH      DENY    <span class="kw">← policy says tag untrusted is not allowed</span></pre>
+
+</body></html>

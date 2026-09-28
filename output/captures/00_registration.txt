@@ -1,0 +1,34 @@
+==========================================================
+ Section 0 — Confirm nodes registered with the right tag
+ captured: 2026-09-28T17:54:36Z
+==========================================================
+
+$ $ docker exec tailscaletest-poc-ts-admin-portal-1 tailscale status
+100.110.90.56   admin-portal-2    admin-portal-2.taila1b884.ts.net  linux  -                                                     
+100.126.225.84  carla-cs-1        cmarinvalios@                     linux  offline, last seen 9m ago                             
+100.113.216.38  carla-cs          cmarinvalios@                     linux  offline, last seen 4h ago                             
+100.74.39.66    diego-platform-1  cmarinvalios@                     linux  offline, last seen 9m ago                             
+100.103.39.35   diego-platform    cmarinvalios@                     linux  offline, last seen 4h ago                             
+100.124.233.31  eng-admin         tagged-devices                    linux  active; direct 190.210.192.11:33161, tx 2332 rx 1940  
+100.72.195.85   eve-attacker-1    cmarinvalios@                     linux  offline, last seen 9m ago                             
+100.126.122.80  eve-attacker      cmarinvalios@                     linux  offline, last seen 4h ago                             
+
+$ $ docker exec tailscaletest-poc-ts-admin-portal-1 tailscale status --json | jq '.Self.Tags'
+[
+  "tag:admin-portal"
+]
+
+$ $ docker exec tailscaletest-poc-ts-internal-db-1 tailscale status --json | jq '.Self.Tags'
+[
+  "tag:internal-db"
+]
+
+$ $ docker exec tailscaletest-poc-ts-eng-admin-1 tailscale status --json | jq '.Self.Tags'
+[
+  "tag:eng-admin"
+]
+
+$ $ docker exec tailscaletest-poc-ts-untrusted-1 tailscale status --json | jq '.Self.Tags'
+[
+  "tag:untrusted"
+]

@@ -1,0 +1,16 @@
+==========================================================
+ Section 2 — eng-admin → internal-db:5432 direct  (expect DENY)
+ captured: 2026-09-28T17:54:36Z
+==========================================================
+
+$ $ docker exec tailscaletest-poc-ts-eng-admin-1 nc -zv -w 2 internal-db.taila1b884.ts.net 5432
+nc: bad address 'internal-db.taila1b884.ts.net'
+
+$ $ docker exec tailscaletest-poc-ts-eng-admin-1 nc -zv -w 2 100.83.102.92 5432
+nc: 100.83.102.92 (100.83.102.92:5432): Host is unreachable
+
+$ $ docker exec tailscaletest-poc-ts-eng-admin-1 getent hosts internal-db.taila1b884.ts.net
+(no entry — name not in eng-admin's netmap)
+
+(Postgres logs — proof no inbound attempt was accepted:)
+$ $ docker exec tailscaletest-poc-ts-internal-db-1 cat /var/lib/postgresql/data/log/*.log 2>/dev/null | tail -3

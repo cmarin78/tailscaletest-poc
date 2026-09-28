@@ -1,0 +1,7 @@
+==========================================================
+ Section 5 — untrusted SSH  (expect DENY)
+ captured: 2026-09-28T17:54:38Z
+==========================================================
+
+$ $ docker exec tailscaletest-poc-ts-untrusted-1 tailscale ssh internal-db.taila1b884.ts.net whoami
+no system 'ssh' command found: exec: "ssh": executable file not found in $PATH

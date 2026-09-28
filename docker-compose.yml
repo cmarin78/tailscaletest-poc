@@ -23,7 +23,7 @@ x-tailscale-common: &ts-common
     - NET_RAW
   devices:
     - /dev/net/tun:/dev/net/tun
-  restart: unless-recreated
+  restart: unless-stopped
 
 services:
   # ===================== admin-portal =====================
